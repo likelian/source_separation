@@ -11,6 +11,6 @@ museval==0.4.0
 asteroid-filterbanks==0.3.2
 gitpython
 tf-estimator-nightly==2.8.0.dev2021122109
-scikit-learn=1.0.0
+scikit-learn==1.0.0
 folium==0.2.1
-imgaug=0.2.7
+imgaug==0.2.7
