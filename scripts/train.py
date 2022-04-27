@@ -20,7 +20,7 @@ from openunmix import transforms
 tqdm.monitor_interval = 0
 
 
-def train(args, unmix, encoder, device, train_sampler, optimizer):
+def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.train()
     pbar = tqdm.tqdm(train_sampler, disable=args.quiet)
@@ -31,7 +31,13 @@ def train(args, unmix, encoder, device, train_sampler, optimizer):
         X = encoder(x)
         Y_hat = unmix(X)
         Y = encoder(y)
-        loss = torch.nn.functional.mse_loss(Y_hat, Y)
+        loss = None
+        if loss_function == "CrossEntropyLoss":
+            loss = torch.nn.functional.CrossEntropyLoss(Y_hat, Y)
+        elif loss_function == "MSELoss":
+            loss = torch.nn.functional.mse_loss(Y_hat, Y)
+        else:
+            loss = torch.nn.functional.mse_loss(Y_hat, Y)
         loss.backward()
         optimizer.step()
         losses.update(loss.item(), Y.size(1))
@@ -39,7 +45,7 @@ def train(args, unmix, encoder, device, train_sampler, optimizer):
     return losses.avg
 
 
-def valid(args, unmix, encoder, device, valid_sampler):
+def valid(args, unmix, encoder, device, valid_sampler, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.eval()
     with torch.no_grad():
@@ -48,7 +54,13 @@ def valid(args, unmix, encoder, device, valid_sampler):
             X = encoder(x)
             Y_hat = unmix(X)
             Y = encoder(y)
-            loss = torch.nn.functional.mse_loss(Y_hat, Y)
+            loss = None
+            if loss_function == "CrossEntropyLoss":
+                loss = torch.nn.functional.CrossEntropyLoss(Y_hat, Y)
+            elif loss_function == "MSELoss":
+                loss = torch.nn.functional.mse_loss(Y_hat, Y)
+            else:
+                loss = torch.nn.functional.mse_loss(Y_hat, Y)
             losses.update(loss.item(), Y.size(1))
         return losses.avg
 
@@ -190,6 +202,13 @@ def main():
         default=False,
         help="Speed up training init for dev purposes",
     )
+    
+    parser.add_argument(
+        "--loss_func", 
+        type=str, 
+        default="MSELoss", 
+        help="defines loss function. Choices: CrossEntropyLoss, MSELoss."
+    )
 
     # Misc Parameters
     parser.add_argument(
@@ -199,7 +218,10 @@ def main():
         help="less verbose during training",
     )
     parser.add_argument(
-        "--no-cuda", action="store_true", default=False, help="disables CUDA training"
+        "--no-cuda", 
+        action="store_true", 
+        default=False, 
+        help="disables CUDA training"
     )
 
     args, _ = parser.parse_known_args()
@@ -315,8 +337,8 @@ def main():
     for epoch in t:
         t.set_description("Training epoch")
         end = time.time()
-        train_loss = train(args, unmix, encoder, device, train_sampler, optimizer)
-        valid_loss = valid(args, unmix, encoder, device, valid_sampler)
+        train_loss = train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=args.loss_func)
+        valid_loss = valid(args, unmix, encoder, device, valid_sampler, loss_function=args.loss_func)
         scheduler.step(valid_loss)
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
