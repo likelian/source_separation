@@ -33,7 +33,7 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
         Y = encoder(y)
         loss = None
         if loss_function == "L1Loss":
-            loss = torch.nn.functional.L1Loss(Y_hat, Y)
+            loss = torch.nn.functional.l1_loss(Y_hat, Y)
         elif loss_function == "MSELoss":
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
         else:
@@ -56,7 +56,7 @@ def valid(args, unmix, encoder, device, valid_sampler, loss_function="MSELoss"):
             Y = encoder(y)
             loss = None
             if loss_function == "L1Loss":
-                loss = torch.nn.functional.L1Loss(Y_hat, Y)
+                loss = torch.nn.functional.l1_loss(Y_hat, Y)
             elif loss_function == "MSELoss":
                 loss = torch.nn.functional.mse_loss(Y_hat, Y)
             else:
