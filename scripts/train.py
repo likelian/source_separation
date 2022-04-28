@@ -32,8 +32,8 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
         Y_hat = unmix(X)
         Y = encoder(y)
         loss = None
-        if loss_function == "CrossEntropyLoss":
-            loss = torch.nn.functional.CrossEntropyLoss(Y_hat, Y)
+        if loss_function == "L1Loss":
+            loss = torch.nn.functional.L1Loss(Y_hat, Y)
         elif loss_function == "MSELoss":
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
         else:
@@ -55,8 +55,8 @@ def valid(args, unmix, encoder, device, valid_sampler, loss_function="MSELoss"):
             Y_hat = unmix(X)
             Y = encoder(y)
             loss = None
-            if loss_function == "CrossEntropyLoss":
-                loss = torch.nn.functional.CrossEntropyLoss(Y_hat, Y)
+            if loss_function == "L1Loss":
+                loss = torch.nn.functional.L1Loss(Y_hat, Y)
             elif loss_function == "MSELoss":
                 loss = torch.nn.functional.mse_loss(Y_hat, Y)
             else:
@@ -207,7 +207,7 @@ def main():
         "--loss_func", 
         type=str, 
         default="MSELoss", 
-        help="defines loss function. Choices: CrossEntropyLoss, MSELoss."
+        help="defines loss function. Choices: L1Loss, MSELoss."
     )
 
     # Misc Parameters
