@@ -19,7 +19,6 @@ from openunmix import transforms
 
 tqdm.monitor_interval = 0
 
-
 def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.train()
@@ -176,6 +175,12 @@ def main():
         default=False,
         help="Use unidirectional LSTM",
     )
+    parser.add_argument(
+        "--arch", 
+        type=str, 
+        default="lstm", 
+        help="architecture for the model. Options: lstm, transformer"
+    )
     parser.add_argument("--nfft", type=int, default=4096, help="STFT fft size and window size")
     parser.add_argument("--nhop", type=int, default=1024, help="STFT hop size")
     parser.add_argument(
@@ -290,6 +295,7 @@ def main():
             nb_channels=args.nb_channels,
             hidden_size=args.hidden_size,
             max_bin=max_bin,
+            arch=args.arch
         ).to(device)
 
     optimizer = torch.optim.Adam(unmix.parameters(), lr=args.lr, weight_decay=args.weight_decay)

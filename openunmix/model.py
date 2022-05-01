@@ -5,7 +5,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-from torch.nn import LSTM, BatchNorm1d, Linear, Parameter
+from torch.nn import LSTM, BatchNorm1d, Linear, Parameter, Transformer
 from .filtering import wiener
 from .transforms import make_filterbanks, ComplexNorm
 
@@ -36,6 +36,7 @@ class OpenUnmix(nn.Module):
         hidden_size: int = 512,
         nb_layers: int = 3,
         unidirectional: bool = False,
+        arch: str = "lstm", 
         input_mean: Optional[np.ndarray] = None,
         input_scale: Optional[np.ndarray] = None,
         max_bin: Optional[int] = None,
@@ -59,14 +60,31 @@ class OpenUnmix(nn.Module):
         else:
             lstm_hidden_size = hidden_size // 2
 
-        self.lstm = LSTM(
-            input_size=hidden_size,
-            hidden_size=lstm_hidden_size,
-            num_layers=nb_layers,
-            bidirectional=not unidirectional,
-            batch_first=False,
-            dropout=0.4 if nb_layers > 1 else 0,
-        )
+        self.arch = arch
+
+        if arch == "lstm":
+            self.lstm = LSTM(
+                input_size=hidden_size,
+                hidden_size=lstm_hidden_size,
+                num_layers=nb_layers,
+                bidirectional=not unidirectional,
+                batch_first=False,
+                dropout=0.4 if nb_layers > 1 else 0,
+            )
+        elif arch == "transformer":
+            self.transformer = Transformer(
+                d_model = hidden_size, 
+                dropout=0.4 if nb_layers > 1 else 0,
+            )
+        else:
+            self.lstm = LSTM(
+                input_size=hidden_size,
+                hidden_size=lstm_hidden_size,
+                num_layers=nb_layers,
+                bidirectional=not unidirectional,
+                batch_first=False,
+                dropout=0.4 if nb_layers > 1 else 0,
+            )
 
         fc2_hiddensize = hidden_size * 2
         self.fc2 = Linear(in_features=fc2_hiddensize, out_features=hidden_size, bias=False)
@@ -138,10 +156,15 @@ class OpenUnmix(nn.Module):
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
-        lstm_out = self.lstm(x)
+        if self.arch == "lstm":
+            model_out = self.lstm(x)
+        elif self.arch == "transformer":
+            model_out = self.transformer(x, x)
+        else:
+            model_out = self.lstm(x)
 
         # lstm skip connection
-        x = torch.cat([x, lstm_out[0]], -1)
+        x = torch.cat([x, model_out], -1)
 
         # first dense stage + batch norm
         x = self.fc2(x.reshape(-1, x.shape[-1]))
