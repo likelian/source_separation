@@ -158,13 +158,16 @@ class OpenUnmix(nn.Module):
         # apply 3-layers of stacked LSTM
         if self.arch == "lstm":
             model_out = self.lstm(x)
+            x = torch.cat([x, model_out[0]], -1)
         elif self.arch == "transformer":
             model_out = self.transformer(x, x)
+            x = torch.cat([x, model_out], -1)
         else:
             model_out = self.lstm(x)
+            x = torch.cat([x, model_out[0]], -1)
 
         # lstm skip connection
-        x = torch.cat([x, model_out], -1)
+        # x = torch.cat([x, model_out], -1)
 
         # first dense stage + batch norm
         x = self.fc2(x.reshape(-1, x.shape[-1]))
