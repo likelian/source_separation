@@ -12,6 +12,8 @@ import os
 import copy
 import torchaudio
 
+import sys
+sys.path.insert(0, “..”)
 from openunmix import data
 from openunmix import model
 from openunmix import utils
@@ -35,6 +37,13 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
             loss = torch.nn.functional.l1_loss(Y_hat, Y)
         elif loss_function == "MSELoss":
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
+        elif loss_function == "DualLoss":
+            freq_loss = torch.nn.functional.mse_loss(Y_hat, Y)
+            #time_loss = torch.nn.functional.mse_loss(Y_hat, Y)
+            loss = torch.nn.functional.mse_loss(Y_hat, Y)
+
+
+
         else:
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
         loss.backward()
@@ -176,9 +185,9 @@ def main():
         help="Use unidirectional LSTM",
     )
     parser.add_argument(
-        "--arch", 
-        type=str, 
-        default="lstm", 
+        "--arch",
+        type=str,
+        default="lstm",
         help="architecture for the model. Options: lstm, transformer"
     )
     parser.add_argument("--nfft", type=int, default=4096, help="STFT fft size and window size")
@@ -207,11 +216,11 @@ def main():
         default=False,
         help="Speed up training init for dev purposes",
     )
-    
+
     parser.add_argument(
-        "--loss_func", 
-        type=str, 
-        default="MSELoss", 
+        "--loss_func",
+        type=str,
+        default="MSELoss",
         help="defines loss function. Choices: L1Loss, MSELoss."
     )
 
@@ -223,9 +232,9 @@ def main():
         help="less verbose during training",
     )
     parser.add_argument(
-        "--no-cuda", 
-        action="store_true", 
-        default=False, 
+        "--no-cuda",
+        action="store_true",
+        default=False,
         help="disables CUDA training"
     )
 
