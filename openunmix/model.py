@@ -75,6 +75,8 @@ class OpenUnmix(nn.Module):
             self.transformer = Transformer(
                 d_model = hidden_size, 
                 dropout=0.4 if nb_layers > 1 else 0,
+                num_encoder_layers=3,
+                num_decoder_layers=3
             )
         else:
             self.lstm = LSTM(
