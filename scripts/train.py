@@ -12,6 +12,8 @@ import os
 import copy
 import torchaudio
 
+import sys
+os.path.insert(0,"..")
 from openunmix import data
 from openunmix import model
 from openunmix import utils
