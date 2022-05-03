@@ -22,7 +22,7 @@ from openunmix import transforms
 
 tqdm.monitor_interval = 0
 
-def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function="MSELoss"):
+def train(args, unmix, encoder, device, train_sampler, optimizer, decoder=None, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.train()
     pbar = tqdm.tqdm(train_sampler, disable=args.quiet)
@@ -31,7 +31,8 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
         X = encoder(x)
-        Y_hat = unmix(X)
+        tgt = decoder(y)
+        Y_hat = unmix(X, tgt)
         Y = encoder(y)
         loss = None
         if loss_function == "L1Loss":
@@ -47,14 +48,15 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
     return losses.avg
 
 
-def valid(args, unmix, encoder, device, valid_sampler, loss_function="MSELoss"):
+def valid(args, unmix, encoder, device, valid_sampler, decoder=None, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.eval()
     with torch.no_grad():
         for x, y in valid_sampler:
             x, y = x.to(device), y.to(device)
             X = encoder(x)
-            Y_hat = unmix(X)
+            tgt = decoder(y)
+            Y_hat = unmix(X, tgt)
             Y = encoder(y)
             loss = None
             if loss_function == "L1Loss":
@@ -264,6 +266,7 @@ def main():
         n_fft=args.nfft, n_hop=args.nhop, sample_rate=train_dataset.sample_rate
     )
     encoder = torch.nn.Sequential(stft, model.ComplexNorm(mono=args.nb_channels == 1)).to(device)
+    decoder = torch.nn.Sequential(stft, model.ComplexNorm(mono=args.nb_channels == 1)).to(device)
 
     separator_conf = {
         "nfft": args.nfft,
@@ -346,8 +349,8 @@ def main():
     for epoch in t:
         t.set_description("Training epoch")
         end = time.time()
-        train_loss = train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=args.loss_func)
-        valid_loss = valid(args, unmix, encoder, device, valid_sampler, loss_function=args.loss_func)
+        train_loss = train(args, unmix, encoder, device, train_sampler, optimizer, decoder=decoder, loss_function=args.loss_func)
+        valid_loss = valid(args, unmix, encoder, device, valid_sampler, decoder=decoder, loss_function=args.loss_func)
         scheduler.step(valid_loss)
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
