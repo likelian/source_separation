@@ -137,6 +137,7 @@ class OpenUnmix(nn.Module):
 
         # permute so that batch is last for lstm
         x = x.permute(3, 0, 1, 2)
+        tgt = tgt.permute(3, 0, 1, 2)
         # get current spectrogram shape
         nb_frames, nb_samples, nb_channels, nb_bins = x.data.shape
 
@@ -144,18 +145,26 @@ class OpenUnmix(nn.Module):
 
         # crop
         x = x[..., : self.nb_bins]
+        tgt = tgt[..., : self.nb_bins]
         # shift and scale input to mean=0 std=1 (across all bins)
         x = x + self.input_mean
         x = x * self.input_scale
 
+        tgt = tgt + self.input_mean
+        tgt = tgt * self.input_scale
+
         # to (nb_frames*nb_samples, nb_channels*nb_bins)
         # and encode to (nb_frames*nb_samples, hidden_size)
         x = self.fc1(x.reshape(-1, nb_channels * self.nb_bins))
+        tgt = self.fc1(tgt.reshape(-1, nb_channels * self.nb_bins))
         # normalize every instance in a batch
         x = self.bn1(x)
+        tgt = self.bn1(tgt)
         x = x.reshape(nb_frames, nb_samples, self.hidden_size)
+        tgt = tgt.reshape(nb_frames, nb_samples, self.hidden_size)
         # squash range ot [-1, 1]
         x = torch.tanh(x)
+        tgt = torch.tanh(tgt)
 
         # apply 3-layers of stacked LSTM
         if self.arch == "lstm":
