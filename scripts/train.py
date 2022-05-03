@@ -18,10 +18,11 @@ from openunmix import data
 from openunmix import model
 from openunmix import utils
 from openunmix import transforms
+from openunmix import filtering
 
 tqdm.monitor_interval = 0
 
-def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function="MSELoss"):
+def train(args, unmix, encoder, decoder, stft, istft, device, train_sampler, optimizer, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.train()
     pbar = tqdm.tqdm(train_sampler, disable=args.quiet)
@@ -29,23 +30,44 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
         pbar.set_description("Training batch")
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
+
         X = encoder(x)
+
         Y_hat = unmix(X)
         Y = encoder(y)
+
         loss = None
         if loss_function == "L1Loss":
             loss = torch.nn.functional.l1_loss(Y_hat, Y)
         elif loss_function == "MSELoss":
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
         elif loss_function == "DualLoss":
-            freq_loss = torch.nn.functional.mse_loss(Y_hat, Y)
-            #time_loss = torch.nn.functional.mse_loss(Y_hat, Y)
-            loss = torch.nn.functional.mse_loss(Y_hat, Y)
 
+            freq_loss = torch.nn.functional.mse_loss(Y_hat, Y)
+
+            X_complex = stft(x)
+            X_phi = X_complex.permute(4, 0, 1, 2, 3)[1] #mixture phase
+            Y_complex = torch.stack([Y_hat, X_phi]).permute(1, 2, 3, 4, 0)
+            y_hat = istft(Y_complex)
+
+            y_len = y.shape[2]
+            y_hat_len = y_hat.shape[2]
+
+            len_diff = y_len - y_hat_len
+            if len_diff > 0:
+                y = y.permute(2, 0, 1)[:y_hat_len].permute(1, 2, 0)
+            elif len_diff < 0:
+                y_hat = y_hat.permute(2, 0, 1)[:y_len].permute(1, 2, 0)
+
+            time_loss = torch.nn.functional.mse_loss(y_hat, y)
+
+            loss = 0.9 * freq_loss + 0.1 * time_loss
 
 
         else:
             loss = torch.nn.functional.mse_loss(Y_hat, Y)
+
+
         loss.backward()
         optimizer.step()
         losses.update(loss.item(), Y.size(1))
@@ -53,22 +75,56 @@ def train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=
     return losses.avg
 
 
-def valid(args, unmix, encoder, device, valid_sampler, loss_function="MSELoss"):
+def valid(args, unmix, encoder, decoder, stft, istft, device, valid_sampler, loss_function="MSELoss"):
     losses = utils.AverageMeter()
     unmix.eval()
     with torch.no_grad():
         for x, y in valid_sampler:
             x, y = x.to(device), y.to(device)
             X = encoder(x)
+            print("X.shape", X.shape)
             Y_hat = unmix(X)
+            print("Y_hat.shape", Y_hat.shape)
             Y = encoder(y)
+
+            X_complex = stft(x)
+            print("X_complex.shape", X_complex.shape)
+            x_decoded = istft(X_complex)
+            print("x_decoded.shape", x_decoded.shape)
+            Y_hat = unmix(X)
+            print("Y_hat.shape", Y_hat.shape)
+
             loss = None
             if loss_function == "L1Loss":
                 loss = torch.nn.functional.l1_loss(Y_hat, Y)
             elif loss_function == "MSELoss":
                 loss = torch.nn.functional.mse_loss(Y_hat, Y)
+            elif loss_function == "DualLoss":
+
+                freq_loss = torch.nn.functional.mse_loss(Y_hat, Y)
+
+                X_complex = stft(x)
+                X_phi = X_complex.permute(4, 0, 1, 2, 3)[1] #mixture phase
+                Y_complex = torch.stack([Y_hat, X_phi]).permute(1, 2, 3, 4, 0)
+                y_hat = istft(Y_complex)
+
+                y_len = y.shape[2]
+                y_hat_len = y_hat.shape[2]
+
+                len_diff = y_len - y_hat_len
+                if len_diff > 0:
+                    y = y.permute(2, 0, 1)[:y_hat_len].permute(1, 2, 0)
+                elif len_diff < 0:
+                    y_hat = y_hat.permute(2, 0, 1)[:y_len].permute(1, 2, 0)
+
+                time_loss = torch.nn.functional.mse_loss(y_hat, y)
+
+                loss = 0.9 * freq_loss + 0.1 * time_loss
             else:
                 loss = torch.nn.functional.mse_loss(Y_hat, Y)
+
+
+
             losses.update(loss.item(), Y.size(1))
         return losses.avg
 
@@ -221,7 +277,7 @@ def main():
         "--loss_func",
         type=str,
         default="MSELoss",
-        help="defines loss function. Choices: L1Loss, MSELoss."
+        help="defines loss function. Choices: L1Loss, MSELoss, DualLoss."
     )
 
     # Misc Parameters
@@ -266,10 +322,12 @@ def main():
     )
     valid_sampler = torch.utils.data.DataLoader(valid_dataset, batch_size=1, **dataloader_kwargs)
 
-    stft, _ = transforms.make_filterbanks(
-        n_fft=args.nfft, n_hop=args.nhop, sample_rate=train_dataset.sample_rate
+    stft, istft = transforms.make_filterbanks(
+        n_fft=args.nfft, n_hop=args.nhop, sample_rate=train_dataset.sample_rate,  method="asteroid"
     )
     encoder = torch.nn.Sequential(stft, model.ComplexNorm(mono=args.nb_channels == 1)).to(device)
+    decoder = torch.nn.Sequential(istft, model.ComplexNorm(mono=args.nb_channels == 1)).to(device)
+
 
     separator_conf = {
         "nfft": args.nfft,
@@ -285,7 +343,9 @@ def main():
         scaler_mean = None
         scaler_std = None
     else:
-        scaler_mean, scaler_std = get_statistics(args, encoder, train_dataset)
+        #scaler_mean, scaler_std = get_statistics(args, encoder, train_dataset)
+        scaler_mean = None
+        scaler_std = None
 
     max_bin = utils.bandwidth_to_max_bin(train_dataset.sample_rate, args.nfft, args.bandwidth)
 
@@ -352,8 +412,8 @@ def main():
     for epoch in t:
         t.set_description("Training epoch")
         end = time.time()
-        train_loss = train(args, unmix, encoder, device, train_sampler, optimizer, loss_function=args.loss_func)
-        valid_loss = valid(args, unmix, encoder, device, valid_sampler, loss_function=args.loss_func)
+        train_loss = train(args, unmix, encoder, decoder, stft, istft, device, train_sampler, optimizer, args.loss_func)
+        valid_loss = valid(args, unmix, encoder, decoder, stft, istft, device, valid_sampler, args.loss_func)
         scheduler.step(valid_loss)
         train_losses.append(train_loss)
         valid_losses.append(valid_loss)
