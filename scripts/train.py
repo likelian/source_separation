@@ -343,9 +343,9 @@ def main():
         scaler_mean = None
         scaler_std = None
     else:
-        #scaler_mean, scaler_std = get_statistics(args, encoder, train_dataset)
-        scaler_mean = None
-        scaler_std = None
+        scaler_mean, scaler_std = get_statistics(args, encoder, train_dataset)
+        #scaler_mean = None
+        #scaler_std = None
 
     max_bin = utils.bandwidth_to_max_bin(train_dataset.sample_rate, args.nfft, args.bandwidth)
 
