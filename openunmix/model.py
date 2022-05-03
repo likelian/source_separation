@@ -75,8 +75,8 @@ class OpenUnmix(nn.Module):
             self.transformer = Transformer(
                 d_model = hidden_size, 
                 dropout=0.4 if nb_layers > 1 else 0,
-                num_encoder_layers=6,
-                num_decoder_layers=6
+                num_encoder_layers=3,
+                num_decoder_layers=3
             )
         else:
             self.lstm = LSTM(
@@ -162,7 +162,7 @@ class OpenUnmix(nn.Module):
             model_out = self.lstm(x)
             x = torch.cat([x, model_out[0]], -1)
         elif self.arch == "transformer":
-            model_out = self.transformer(x, x)
+            model_out = self.transformer(x, tgt)
             x = torch.cat([x, model_out], -1)
         else:
             model_out = self.lstm(x)
