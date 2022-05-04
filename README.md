@@ -1,5 +1,7 @@
 Visit the originial open-Unmix repository at [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch).
 
+[Report](https://github.com/likelian/source_separation/blob/master/docs/Source_Separation.pdf)
+
 
 
 <h1>The model input</h1>
@@ -63,7 +65,5 @@ https://user-images.githubusercontent.com/74072319/166628216-2dd3ad78-5f0d-49b7-
 
 
 
-
-<h1> [Report](https://github.com/likelian/source_separation/blob/master/docs/Source_Separation.pdf) </h1>
 
 
