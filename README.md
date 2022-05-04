@@ -1,6 +1,6 @@
 Visit the originial open-Unmix repository at [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch).
 
-[Report](https://github.com/likelian/source_separation/blob/master/docs/Source_Separation.pdf)
+Our [research report](https://github.com/likelian/source_separation/blob/master/docs/Source_Separation.pdf)
 
 
 
