@@ -48,7 +48,9 @@ https://user-images.githubusercontent.com/74072319/166628379-820fa24b-867e-48e6-
 
 
 
-<h1> [Dual Loss](https://github.com/likelian/source_separation/tree/likelian) Model Output </h1>
+<h1> Dual Loss Model Output </h1>
+
+[Link](https://github.com/likelian/source_separation/tree/likelian)
 
 <h3>separated accompaniment</h3>
 
