@@ -3,6 +3,12 @@ The originial open-Unmix repository at [Open-Unmix](https://github.com/sigsep/op
 
 <h1>The model input</h1>
 
+
+
+https://user-images.githubusercontent.com/74072319/166628743-56c35392-4892-490a-b4e6-6f2aa2f25d00.mp4
+
+
+
 (Listen to the [full song](https://www.youtube.com/watch?v=ebc9aVpZqAQ))
 
 
