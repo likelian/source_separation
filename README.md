@@ -54,14 +54,15 @@ https://user-images.githubusercontent.com/74072319/166628379-820fa24b-867e-48e6-
 
 <h1>Dual Loss Model</h1>
 
-https://user-images.githubusercontent.com/74072319/166627856-a5b3cb46-7a0a-4b0d-b818-0d44c862654c.mp4
-
 <h3>separated accompaniment</h3>
 
+https://user-images.githubusercontent.com/74072319/166627856-a5b3cb46-7a0a-4b0d-b818-0d44c862654c.mp4
 
+
+<h3>separated vocals</h3>
 
 https://user-images.githubusercontent.com/74072319/166628216-2dd3ad78-5f0d-49b7-b8a0-b59da6b2a3fa.mp4
 
 
-<h3>separated vocals</h3>
+
 
