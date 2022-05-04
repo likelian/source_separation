@@ -14,7 +14,7 @@ https://user-images.githubusercontent.com/74072319/166628743-56c35392-4892-490a-
 
 
 
-<h1>Original Model</h1>
+<h1>Original Model Output</h1>
 
 <h3>separated accompaniment</h3>
 
@@ -34,7 +34,7 @@ https://user-images.githubusercontent.com/74072319/166628489-eb61a48c-8411-4ce8-
 
 
 
-<h1> L1 Loss Model</h1>
+<h1> L1 Loss Model Output</h1>
 
 <h3>separated accompaniment</h3>
 
@@ -52,7 +52,7 @@ https://user-images.githubusercontent.com/74072319/166628379-820fa24b-867e-48e6-
 
 
 
-<h1>Dual Loss Model</h1>
+<h1>Dual Loss Model Output </h1>
 
 <h3>separated accompaniment</h3>
 
