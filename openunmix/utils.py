@@ -209,6 +209,7 @@ def load_separator(
 
     # when path exists, we assume its a custom model saved locally
     if model_path.exists():
+        targets = "vocals"
         if targets is None:
             raise UserWarning("For custom models, please specify the targets")
 
