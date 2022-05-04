@@ -1,4 +1,5 @@
-The originial open-Unmix repository at [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch).
+Visit the originial open-Unmix repository at [Open-Unmix](https://github.com/sigsep/open-unmix-pytorch).
+
 
 
 <h1>The model input</h1>
@@ -31,9 +32,6 @@ https://user-images.githubusercontent.com/74072319/166628489-eb61a48c-8411-4ce8-
 
 
 
-
-
-
 <h1> L1 Loss Model Output</h1>
 
 <h3>separated accompaniment</h3>
@@ -50,9 +48,7 @@ https://user-images.githubusercontent.com/74072319/166628379-820fa24b-867e-48e6-
 
 
 
-
-
-<h1>Dual Loss Model Output </h1>
+<h1> [Dual Loss](https://github.com/likelian/source_separation/tree/likelian) Model Output </h1>
 
 <h3>separated accompaniment</h3>
 
@@ -64,5 +60,8 @@ https://user-images.githubusercontent.com/74072319/166627856-a5b3cb46-7a0a-4b0d-
 https://user-images.githubusercontent.com/74072319/166628216-2dd3ad78-5f0d-49b7-b8a0-b59da6b2a3fa.mp4
 
 
+
+
+<h1> [Report](https://github.com/likelian/source_separation/blob/master/docs/Source_Separation.pdf) </h1>
 
 
